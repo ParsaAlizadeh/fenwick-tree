@@ -1,0 +1,40 @@
+#+title: Fenwick Tree in Haskell
+#+author: Parsa Alizadeh
+
+* Generic Fenwick Tree
+
+Fenwick tree are known to be really fast. The important tricks are using arrays and indices directly
+to locate nodes in the tree. To implement this I need to use ~IO~ or ~ST~ monad, using either
+~Array~, ~Vector~, or ~PrimArray~.
+
+** Issues with generic data types
+
+I want the user be able to create a ~newtype~ over ~Int~ for example, and define their own ~Monoid~
+or ~Semigroup~ instance for it. The fact that the underlying type is ~Int~ means the operations can
+be done in an unboxed array. The problem is that unboxed array do not work with new types very
+easily.
+
+One workaround was to use GeneralizedNewTypeDeriving, but after researching, it seems that GND only
+works when the type role is nominal, and in unboxed array implementations they are not nominal. (See
+[[https://gitlab.haskell.org/ghc/ghc/-/issues/9220][ghc issue #9220]]).
+
+** Prototype using boxed arrays
+
+I've done implementing ~FenIOArray~. It passes manual tests but needs stress testing and
+benchmarking. I want to see the bottlenecks too.
+
+Function names are not great and need to be changed.
+
+Semantic of specifying a range is not defined well. We can go with [l, r) or [1, r) in the case of
+prefixes or the full range [l, r] and [1, r].
+
+Haskell indices help for 1-based trees in fenwick implementation. I want to see if they have any
+runtime overhead.
+
+Monoids in fenwick should be cumtative. This means ~[]~ or ~First~ are not applicable to fenwicks.
+
+Need to think about monoids of sum modulo m, or products modulo p. They are mathematically groups,
+but not straightforward monoids and groups in Haskell. I want to make sure when the modulo is
+constant the compiler should optimize it.
+
+See [[https://en.wikipedia.org/wiki/Fenwick_tree][Wikipedia Fenwick tree]]. Also there maybe functions for least significant bit in ~Data.Bits~.
