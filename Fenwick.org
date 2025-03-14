@@ -70,3 +70,9 @@ Why didn't I see this idea sooner?
    ~Data.Vector~ somehow supports it while unboxed ~IO~ and ~ST~ have no support for pairs or
    tuples.
 2. Maybe I was ignorant. See [[https://hackage.haskell.org/package/vector-0.13.2.0/docs/Data-Vector-Unboxed.html#t:As][Data.Vector As]] newtype.
+
+I implement instances manually, although I would assume there is an easier way with DerivingVia or
+other similar extenstions. Also I could use coerce, but they need lots of type application.
+
+It is possible to implement arrays for Enums too (for example a sum type in Haskell can be written
+as an unboxed array).
