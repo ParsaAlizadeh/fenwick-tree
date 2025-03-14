@@ -38,3 +38,35 @@ but not straightforward monoids and groups in Haskell. I want to make sure when 
 constant the compiler should optimize it.
 
 See [[https://en.wikipedia.org/wiki/Fenwick_tree][Wikipedia Fenwick tree]]. Also there maybe functions for least significant bit in ~Data.Bits~.
+
+** Coercible Array
+<2025-03-14 Fri>
+
+I come with an idea that I haven't seen anywhere. The idea is to represent coercible arrays in a
+newtype.
+
+#+begin_src haskell
+  newtype ArrayC array rep ix elem = ArrayC (array ix rep)
+
+  instance (IArray array rep, Coercible rep elem) => IArray (ArrayC array rep) elem where { ... }
+
+  instance (Monad m, MArray array rep m, Coercible rep elem) => MArray (ArrayC array rep) elem m where { ... }
+#+end_src
+
+Why do I like this idea?
+1. I thought implementing ~IArray~ and ~MArray~ would be impossible, but I can compile the above
+   code. I think the main reason is using a newtype rather that trying to implement unboxed versions
+   directly for newtypes. I own the newtype, so I can implement the instances!
+2. There is nothing about boxed or unboxed in the code. This is supports any kind of newtypes for
+   any kind of arrays. Although arrays are limited to ~ST~ and ~IO~ arrays mostly, but the idea can
+   be applied if it was needed.
+3. I didn't benchmark it yet, but I think the overhead of coerce is zero. So the unboxed arrays of
+   newtypes have the same speed as the underlying arrays.
+4. It is much simpler than ~Data.Vector~.
+
+Why didn't I see this idea sooner?
+1. One limiting reason of this idea is using tuples. Tuples are necessary for data structures too.
+   Although I haven't seen any Fenwicks with complex data types, it might happend theoritcally, and
+   ~Data.Vector~ somehow supports it while unboxed ~IO~ and ~ST~ have no support for pairs or
+   tuples.
+2. Maybe I was ignorant. See [[https://hackage.haskell.org/package/vector-0.13.2.0/docs/Data-Vector-Unboxed.html#t:As][Data.Vector As]] newtype.
