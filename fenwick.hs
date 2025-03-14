@@ -2,6 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad
 import Control.Monad.ST
@@ -12,6 +13,7 @@ import Data.Monoid
 import Data.Coerce
 import Data.Array.Base
 import Data.Bifunctor
+import Text.Printf
 
 newtype ArrayC array rep ix elem = ArrayC (array ix rep)
 
@@ -22,23 +24,19 @@ instance (IArray array rep, Coercible rep elem) => IArray (ArrayC array rep) ele
   numElements (ArrayC array) = numElements array
   {-# INLINE numElements #-}
 
-  unsafeArray ix elems = ArrayC $ unsafeArray ix elems' where
-    elems' = map (second coerce) elems
+  unsafeArray ix elems = ArrayC $ unsafeArray ix (coerce elems)
   {-# INLINE unsafeArray #-}
-  
+
   unsafeAt (ArrayC array) ix = coerce $ unsafeAt array ix
   {-# INLINE unsafeAt #-}
 
-  unsafeReplace (ArrayC array) elems = ArrayC $ unsafeReplace array elems' where
-    elems' = map (second coerce) elems
+  unsafeReplace (ArrayC array) elems = ArrayC $ unsafeReplace array (coerce elems)
   {-# INLINE unsafeReplace #-}
-  
-  unsafeAccum f (ArrayC array) elems = ArrayC $ unsafeAccum f' array elems where
-    f' r e' = coerce (f (coerce r) e')
+
+  unsafeAccum f (ArrayC array) elems = ArrayC $ unsafeAccum (coerce f) array elems
   {-# INLINE unsafeAccum #-}
-  
-  unsafeAccumArray f e ix elems = ArrayC $ unsafeAccumArray f' (coerce e) ix elems where
-    f' r e' = coerce (f (coerce r) e')
+
+  unsafeAccumArray f e ix elems = ArrayC $ unsafeAccumArray (coerce f) (coerce e) ix elems
   {-# INLINE unsafeAccumArray #-}
 
 instance (Monad m, MArray arr r m, Coercible r e) => MArray (ArrayC arr r) e m where
@@ -115,10 +113,10 @@ testNewFen = newFen
 
 main = do
   fen <- testNewFen 10
-  addFen fen 3 (Sum 3)
-  addFen fen 7 (Sum 70)
-  addFen fen 9 (Sum 100)
+  addFen fen 3 3
+  addFen fen 7 70
+  addFen fen 9 100
   sumRangeFen fen 7 8 >>= print
   forM_ [0..10] $ \i -> do
-    s <- sumPrefixFen fen i
-    print (i, s)
+    Sum s <- sumPrefixFen fen i
+    printf "%2d | %4d\n" i s
