@@ -1,19 +1,18 @@
+module Fenwick where
+
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 import Control.Monad
-import Control.Monad.ST
-import Data.Array.IO
 import Data.Array.MArray
 import Data.Bits
-import Data.Monoid
 import Data.Coerce
 import Data.Array.Base
-import Data.Bifunctor
-import Text.Printf
 
 newtype ArrayC array rep ix elem = ArrayC (array ix rep)
 
@@ -105,18 +104,4 @@ instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray
 
 type FenMArrayC array rep elem = FenMArray (ArrayC array rep) elem
 
-instance Num a => Group (Sum a) where
-  inverse = negate
 
-testNewFen :: Int -> IO (FenMArrayC IOUArray Int (Sum Int))
-testNewFen = newFen
-
-main = do
-  fen <- testNewFen 10
-  addFen fen 3 3
-  addFen fen 7 70
-  addFen fen 9 100
-  sumRangeFen fen 7 8 >>= print
-  forM_ [0..10] $ \i -> do
-    Sum s <- sumPrefixFen fen i
-    printf "%2d | %4d\n" i s
