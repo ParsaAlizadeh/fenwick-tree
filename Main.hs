@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, KindSignatures, ScopedTypeVariables, RoleAnnotations, TypeApplications #-}
+{-# LANGUAGE DataKinds, KindSignatures, ScopedTypeVariables, RoleAnnotations, TypeApplications, BangPatterns #-}
 
 module Main where
 
@@ -18,19 +18,19 @@ instance Num a => Group (Sum a) where
 newFenSum :: Int -> IO (FenMArrayC IOUArray Int (Sum Int))
 newFenSum = newFen
 
-type role Modulo nominal
-newtype Modulo (m :: Nat) = Modulo Int
+type role Modulo nominal nominal
+newtype Modulo a (m :: Nat) = Modulo a
     deriving (Show, Eq, Ord)
 
-getMod :: KnownNat m => proxy m -> Int
+getMod :: (Integral a, KnownNat m) => proxy m -> a
 getMod = fromInteger . natVal
 
-instance KnownNat m => Num (Modulo m) where
-    x@(Modulo a) + (Modulo b) = Modulo $ 
+instance (KnownNat m, Integral a) => Num (Modulo a m) where
+    x@(Modulo !a) + (Modulo !b) = Modulo $ 
         if a + b >= m' then a + b - m' else a + b where
         m' = getMod x
     
-    x@(Modulo a) * (Modulo b) = Modulo $ (a * b) `mod` m' where
+    x@(Modulo !a) * (Modulo !b) = Modulo $ (a * b) `mod` m' where
         m' = getMod x
     
     abs = id
@@ -38,54 +38,34 @@ instance KnownNat m => Num (Modulo m) where
     signum = const 1
 
     fromInteger n = Modulo . fromInteger $ n `mod` m' where
-        m' = natVal (Proxy :: Proxy m)
+        m' = getMod (Proxy :: Proxy m)
     
-    negate x@(Modulo n) = Modulo $ m' - n where
+    negate x@(Modulo !n) = Modulo $ if n == 0 then 0 else m' - n where
         m' = getMod x
 
-newtype SumMod m = SumMod (Modulo m)
-    deriving (Show, Eq, Ord, Num)
-
-instance KnownNat m => Semigroup (SumMod m) where
-    (<>) = (+)
-
-instance KnownNat m => Monoid (SumMod m) where
-    mempty = 0
-
-newtype ProductMod m = ProductMod (Modulo m)
-    deriving (Show, Eq, Ord, Num)
-
-instance KnownNat m => Semigroup (ProductMod m) where
-    (<>) = (*)
-
-instance KnownNat m => Monoid (ProductMod m) where
-    mempty = 1
-
-type T = ProductMod 1000000007
+type T = Product (Modulo Int 1000000007)
 newFenSumMod :: Int -> IO (FenMArrayC IOUArray Int T)
 newFenSumMod = newFen
 
 binPow :: Num a => a -> Int -> a
-binPow a 0 = 1
+binPow _ 0 = 1
 binPow a 1 = a
-binPow a b
+binPow !a b
     | even b = x * x
     | otherwise = a * x * x where
-        x = binPow a (b `div` 2)
+        !x = binPow (a * a) (b `div` 2)
 
-instance KnownNat m => Group (SumMod m) where
-    inverse = negate
-
-instance KnownNat m => Group (ProductMod m) where
-    inverse a = a `binPow` (m' - 2) where
-        m' = getMod a
+instance (Integral a, KnownNat m) => Group (Product (Modulo a m)) where
+    inverse = coerce go where
+        go (a :: Modulo a m) = a `binPow` (getMod a - 2)
 
 main = do
     fen <- newFenSumMod 10
     addFen fen 2 (-1)
     addFen fen 6 5
-    n :: Int <- coerce <$> sumRangeFen fen 2 7
-    print n
+    -- n :: Int <- coerce <$> sumRangeFen fen 2 7
+    -- print n
     forM_ [0..10] $ \r -> do
         n :: Int <- coerce <$> sumPrefixFen fen r
         printf "%3d %3d\n" r n
+
