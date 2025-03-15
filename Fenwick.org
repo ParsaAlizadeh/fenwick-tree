@@ -76,3 +76,18 @@ other similar extenstions. Also I could use coerce, but they need lots of type a
 
 It is possible to implement arrays for Enums too (for example a sum type in Haskell can be written
 as an unboxed array).
+
+** Modulo type
+<2025-03-15 Sat>
+
+I found [[https://stackoverflow.com/questions/39674555/haskell-how-to-write-a-monoid-instance-for-something-that-depends-on-paramete][a question]] on stackoverflow that helped to implement ~Modulo~ type. The mod is in the type
+and the compiler should be able to optimize it. Another good thing is that ~GHC.TypeLits~ keeps the
+number as a ~Word~ instead of ~S (S (...))~ which is ideal in this case.
+
+I also implemented ~SumMod~ and ~ProductMod~ seperately but realized that ~Sum~ and ~Product~ are
+enough! The only exception is ~Group~ instance for ~Product (Modulo a m)~ which assumes ~m~ is
+prime.
+
+Another assumption that I didn't think about how to represent is the fact that monoids and groups
+defined for Fenwick must be abelian and commutative. I can restrict using general Monoids by
+implementing a dummy instance ~AbelianMonoid~ and implement valid instances.
