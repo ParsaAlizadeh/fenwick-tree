@@ -1,19 +1,64 @@
-module Fenwick where
+{-# LANGUAGE DataKinds, KindSignatures, ScopedTypeVariables, RoleAnnotations, TypeApplications, BangPatterns #-}
 
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE StandaloneDeriving #-}
+module Main where
 
+import Data.Array.IO
+import qualified Data.ByteString.Char8 as C
+import Data.ByteString.Builder
+import Data.List
+import Data.Maybe
 import Control.Monad
 import Data.Array.MArray
 import Data.Bits
-import Data.Coerce
 import Data.Array.Base
-import Group
+import Data.Monoid
+import GHC.TypeLits
+import Data.Proxy
+import Data.Coerce
+import System.IO
+
+class Monoid a => Group a where
+  inverse :: a -> a
+
+instance Num a => Group (Sum a) where
+  inverse = negate
+
+type role Modulo nominal nominal
+newtype Modulo a (m :: Nat) = Modulo a
+    deriving (Show, Eq, Ord)
+
+getMod :: (Integral a, KnownNat m) => proxy m -> a
+getMod = fromInteger . natVal
+
+instance (KnownNat m, Integral a) => Num (Modulo a m) where
+    x@(Modulo !a) + (Modulo !b) = Modulo $ 
+        if a + b >= m' then a + b - m' else a + b where
+        m' = getMod x
+    
+    x@(Modulo !a) * (Modulo !b) = Modulo $ (a * b) `mod` m' where
+        m' = getMod x
+    
+    abs = id
+
+    signum = const 1
+
+    fromInteger n = Modulo . fromInteger $ n `mod` m' where
+        m' = getMod (Proxy :: Proxy m)
+    
+    negate x@(Modulo !n) = Modulo $ if n == 0 then 0 else m' - n where
+        m' = getMod x
+
+binPow :: Num a => a -> Int -> a
+binPow _ 0 = 1
+binPow a 1 = a
+binPow !a b
+    | even b = x * x
+    | otherwise = a * x * x where
+        !x = binPow (a * a) (b `div` 2)
+
+instance (Integral a, KnownNat m) => Group (Product (Modulo a m)) where
+    inverse = coerce go where
+        go (a :: Modulo a m) = a `binPow` (getMod a - 2)
 
 newtype ArrayC array rep ix elem = ArrayC (array ix rep)
 
@@ -76,11 +121,11 @@ sumRangeFen f l r = do
 
 data FenMArray array elem = FenMArray Int (array Int elem)
 
-modifyArray' :: (MArray a e m, Ix i) => a i e -> i -> (e -> e) -> m ()
+modifyArray' :: (MArray a e m, Ix i) => a i e -> Int -> (e -> e) -> m ()
 modifyArray' arr i f = do
-  x <- readArray arr i
+  x <- unsafeRead arr i
   let !x' = f x
-  writeArray arr i x'
+  unsafeWrite arr i x'
 
 instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray array) elem where
   newFen n = do
@@ -96,10 +141,41 @@ instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray
 
   sumPrefixFen (FenMArray n arr) r = do
     let go !s i = if i <= 0 then pure s else do
-          x <- readArray arr i
+          x <- unsafeRead arr i
           go (x <> s) (i - (i .&. (-i)))
     go mempty r
 
 type FenMArrayC array rep elem = FenMArray (ArrayC array rep) elem
 
+newFenSum :: Int -> IO (FenMArrayC IOUArray Int (Sum Int))
+newFenSum = newFen
 
+readInts :: IO [Int]
+readInts = map (fst . fromJust . C.readInt) . C.words <$> C.getLine
+
+printInts :: [Int] -> IO ()
+printInts xs = hPutBuilder stdout (go <> char7 '\n') where
+  go = mconcat . intersperse (char7 ' ') . map intDec $ xs
+
+printInt :: Int -> IO ()
+printInt x = hPutBuilder stdout (intDec x <> char7 '\n')
+
+main = do
+  hSetBuffering stdout (BlockBuffering Nothing)
+  [n] <- readInts
+  fen <- newFenSum n
+  let go = do
+        typ : query <- readInts
+        case typ of
+          0 -> do
+            let [p, x] = query
+            addFen fen p (Sum x)
+          1 -> do
+            let [r] = query
+            sumPrefixFen fen r >>= printInt . getSum
+          2 -> do
+            let [l, r] = query
+            sumRangeFen fen l r >>= printInt . getSum
+          -1 -> pure ()
+        when (typ /= -1) go
+  go

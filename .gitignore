@@ -1,3 +1,7 @@
 *.hi
 *.o
 fenwick
+*.in
+*.out
+*.exe
+testcase*

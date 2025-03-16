@@ -91,3 +91,49 @@ prime.
 Another assumption that I didn't think about how to represent is the fact that monoids and groups
 defined for Fenwick must be abelian and commutative. I can restrict using general Monoids by
 implementing a dummy instance ~AbelianMonoid~ and implement valid instances.
+
+** Profiling
+<2025-03-16 Sun>
+
+I tried to compare a C++ implementation with my own. Both of the files are self-contained (in theory
+they can be compiled statically, but currently the only way I can compile Haskell is with
+~-dynamic~). Both of them are compiled with ~-O2~. The core implmentation of Fenwick is completely
+the same with C++ and Haskell (Haskell allows more abstraction by the way). For a brief moment I
+thought Haskell version is faster, but I was wrong.
+
+C++ version takes a long time on IO, but with scanf/printf or ~sync_with_stdio(false)~ it is more
+than 2x faster than Haskell version. If I don't apply any IO optimization to C++, it takes about 20%
+more than Haskell version.
+
+This is actually interesting. The only IO optimization in Haskell is with ~readInts~ function. This
+is only parsing number using ~ByteString~ library, and there are no explicit optimization to
+buffering or similer topics.
+
+Also, profiling helped me to test the code too. It passes the the testcases and outputs the same as
+the C++ version.
+
+I used ~perf~ to see the bottlenecks. In C++ bottleneck is correctly within the Fenwick code, while
+in Haskell about 15% of runtime is in the base library. This might indicate there are more IO
+optmization in Haskell than I know about.
+
+*** ByteString
+
+I did notice in ~perf~ that a chunk of time is related to ~show~ function. It did actually make
+sense! I changed every ~print~ to a ByteString version ~printInt~:
+
+#+begin_src haskell
+printInts :: [Int] -> IO ()
+printInts xs = hPutBuilder stdout (go <> char7 '\n') where
+  go = mconcat . intersperse (char7 ' ') . map intDec $ xs
+
+printInt :: Int -> IO ()
+printInt x = hPutBuilder stdout (intDec x <> char7 '\n')
+#+end_src
+
+The ratio between C++ and Haskell is very close to 2x. I see with ~perf~ that the main bottleneck is
+at Fenwick, but some of it is related to ~modifyArray~ which worries me. There are also bound
+checking in haskell that might improve the runtime.
+
+*** unsafeRead and unsafeWrite
+
+They have very minimal effect on the runtime, probably less than 10%.
