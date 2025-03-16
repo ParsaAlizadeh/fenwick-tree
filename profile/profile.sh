@@ -2,6 +2,8 @@
 # Usage: ./run_experiments.sh <number_of_tests>
 # Example: ./run_experiments.sh 10
 
+set -euo pipefail
+
 # Check if number of tests is provided
 if [ "$#" -ne 1 ]; then
     echo "Usage: $0 <number_of_tests>"

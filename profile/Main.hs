@@ -121,11 +121,11 @@ sumRangeFen f l r = do
 
 data FenMArray array elem = FenMArray Int (array Int elem)
 
-modifyArray' :: (MArray a e m, Ix i) => a i e -> Int -> (e -> e) -> m ()
+modifyArray' :: (MArray a e m, Ix i) => a i e -> i -> (e -> e) -> m ()
 modifyArray' arr i f = do
-  x <- unsafeRead arr i
+  x <- readArray arr i
   let !x' = f x
-  unsafeWrite arr i x'
+  writeArray arr i x'
 
 instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray array) elem where
   newFen n = do
@@ -141,7 +141,7 @@ instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray
 
   sumPrefixFen (FenMArray n arr) r = do
     let go !s i = if i <= 0 then pure s else do
-          x <- unsafeRead arr i
+          x <- readArray arr i
           go (x <> s) (i - (i .&. (-i)))
     go mempty r
 

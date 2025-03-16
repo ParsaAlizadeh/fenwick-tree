@@ -137,3 +137,8 @@ checking in haskell that might improve the runtime.
 *** unsafeRead and unsafeWrite
 
 They have very minimal effect on the runtime, probably less than 10%.
+
+Update: My experiment was wrong. I didn't check the edge cases, which
+led to believe that the code is correct. I didn't try to profile code
+with correct unsafeRead, but I think the speed improvment won't be
+more than 10%, which is the number I said above.
