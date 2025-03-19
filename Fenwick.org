@@ -142,3 +142,17 @@ Update: My experiment was wrong. I didn't check the edge cases, which
 led to believe that the code is correct. I didn't try to profile code
 with correct unsafeRead, but I think the speed improvment won't be
 more than 10%, which is the number I said above.
+
+** Haskell library
+<2025-03-19 Wed>
+
+I started a haskell library using ~cabal~. The contents of the original files are now seperated in
+multiple modules.
+
++ ~Data.Group~
++ ~Data.Modulo~
++ ~Data.Array.ArrayC~ and ~Data.Vector.VectorC~
++ ~Data.Fenwick.Array~
+
+I will implement the vector version of Fenwick later. The current issue is that a unique
+~FenwickLike~ typeclass seems impossible with vectors.
