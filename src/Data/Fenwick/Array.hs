@@ -5,7 +5,7 @@ module Data.Fenwick.Array
   , newFen
   , addFen
   , sumPrefixFen
-  , sumRangeFen
+  , lowerBoundFen
   ) where
 
 import Data.Array.MArray
@@ -16,6 +16,10 @@ import Data.Monoid.Cancellative
 import Data.Maybe
 
 data FenMArray array elem = FenMArray Int (array Int elem)
+
+lsb :: Int -> Int
+lsb node = node .&. (-node)
+{-# INLINE lsb #-}
 
 modifyArray' :: (MArray a e m, Ix i) => a i e -> i -> (e -> e) -> m ()
 modifyArray' arr i f = do
@@ -30,27 +34,39 @@ newFen n = do
 {-# INLINABLE newFen #-}
 
 addFen :: (MArray array elem f, Commutative elem) => FenMArray array elem -> Int -> elem -> f ()
-addFen (FenMArray n arr) r a = do
-  -- 0 <= r < n - 1
-  let go i = when (i <= n) $ do
-        modifyArray' arr i (a <>)
-        go (i + (i .&. (-i)))
-  go (r + 1)
+addFen (FenMArray n arr) r a = go r where
+  -- 1 <= r <= n
+  go i = when (i <= n) $ do
+    modifyArray' arr i (a <>)
+    go (i + lsb i)
 {-# INLINABLE addFen #-}
 
 sumPrefixFen :: (MArray array elem f, CommutativeMonoid elem) => FenMArray array elem -> Int -> f elem
-sumPrefixFen (FenMArray n arr) r = do
-  let go !s i = if i <= 0 then pure s else do
-        x <- readArray arr i
-        go (x <> s) (i - (i .&. (-i)))
-  go mempty r
+sumPrefixFen (FenMArray n arr) = go mempty where
+  -- prefix (0, r], for 1 <= r <= n
+  go !s i
+    | i <= 0 = pure s
+    | otherwise = do
+      x <- readArray arr i
+      go (x <> s) (i - lsb i)
 {-# INLINABLE sumPrefixFen #-}
 
-sumRangeFen :: (MArray array elem m, CancellativeMonoid elem) => FenMArray array elem -> Int -> Int -> m elem
-sumRangeFen _ l r
-  | l >= r = pure mempty
-sumRangeFen f l r = do
-  ra <- sumPrefixFen f r
-  la <- sumPrefixFen f l
-  pure . fromJust $ ra </> la
-{-# INLINEABLE sumRangeFen #-}
+lowerBoundFen :: (MArray array elem m, CommutativeMonoid elem, Ord elem) => FenMArray array elem -> elem -> m Int
+lowerBoundFen (FenMArray n arr) query = go root (n + 1) mempty where
+  root = bit (finiteBitSize root - countLeadingZeros root)
+  go node
+    | odd node = leaf node
+    | otherwise = nonleaf node
+  leaf node fallback prepend = do
+    nodeval <- readArray arr node
+    pure $ if prepend <> nodeval < query
+      then fallback
+      else node 
+  nonleaf node fallback prepend = do
+    nodeval <- readArray arr node
+    if prepend <> nodeval < query
+      then go (rightOf node) fallback (prepend <> nodeval)
+      else go (leftOf node) node prepend
+  leftOf node = node - (lsb node `unsafeShiftR` 1)
+  rightOf node = node + (lsb node `unsafeShiftR` 1)
+{-# INLINABLE lowerBoundFen #-}
