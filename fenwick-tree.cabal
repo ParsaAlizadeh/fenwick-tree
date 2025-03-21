@@ -26,13 +26,16 @@ library
         Data.Modulo,
         Data.Array.ArrayC,
         Data.Vector.VectorC,
-        Data.Fenwick.Array
+        Data.Fenwick.Array,
+        MyLib
 
     -- Modules included in this library but not exported.
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
+    other-extensions:
+        FlexibleContexts,
+        TypeApplications
     build-depends:    
         base ^>=4.16.4.0,
         vector,

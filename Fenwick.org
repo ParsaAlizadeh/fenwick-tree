@@ -156,3 +156,15 @@ multiple modules.
 
 I will implement the vector version of Fenwick later. The current issue is that a unique
 ~FenwickLike~ typeclass seems impossible with vectors.
+
+** Lowerbound
+<2025-03-21 Fri>
+
+It was actually simple all along. [[https://en.wikipedia.org/wiki/Fenwick_tree][Wikipedia]] explains different representations of the Fenwick Tree,
+and search tree is the one that allows ~lowerbound~.
+
+I find out there is no restriction of Group needed (the Wikipedia explanation, which is the Knuth
+explanation, needs extra operations). It is possible to stay within Monoid. I don't think there is
+any performace downside to this change. The only restricition is that partial sums should be
+sorted. I do not know if there is a better law that is equivalent to this. I believe they are all
+more restrictive and disallow some perfect usecases of Fenwick trees.
