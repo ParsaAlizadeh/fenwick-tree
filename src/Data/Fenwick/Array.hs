@@ -25,19 +25,20 @@ lsb :: Int -> Int
 lsb node = node .&. (-node)
 {-# INLINE lsb #-}
 
+unsafeModifyArray' :: (MArray a e m, Ix i) => a i e -> Int -> (e -> e) -> m ()
 unsafeModifyArray' arr i f = do
   x <- unsafeRead arr i
   let !x' = f x
   unsafeWrite arr i x'
 {-# INLINABLE unsafeModifyArray' #-}
 
-newFen :: (MArray array elem m, CommutativeMonoid elem) => Int -> m (FenMArray array elem)
+newFen :: (MArray array elem m, Monoid elem) => Int -> m (FenMArray array elem)
 newFen n = do
   arr <- newArray (0, n) mempty
   pure (FenMArray n arr)
--- {-# INLINABLE newFen #-}
+{-# INLINABLE newFen #-}
 
-newAccumFen :: (MArray array elem m, Monoid elem, Foldable t) => Int -> t (Int, elem) -> m (FenMArray array elem)
+newAccumFen :: (MArray array elem m, CommutativeMonoid elem, Foldable t) => Int -> t (Int, elem) -> m (FenMArray array elem)
 newAccumFen n xs = do
   arr <- newArray (0, n) mempty
   forM_ xs $ \(i, e) -> do
@@ -48,17 +49,17 @@ newAccumFen n xs = do
       e <- readArray arr i
       unsafeModifyArray' arr j (e <>)
   pure (FenMArray n arr)
--- {-# INLINABLE newAccumFen #-}
+{-# INLINABLE newAccumFen #-}
 
-newListFen :: (MArray array elem m, Monoid elem) => Int -> [elem] -> m (FenMArray array elem)
+newListFen :: (MArray array elem m, CommutativeMonoid elem) => Int -> [elem] -> m (FenMArray array elem)
 newListFen n xs = newAccumFen n $ zip [1..n] xs
--- {-# INLINABLE newListFen #-}
+{-# INLINABLE newListFen #-}
 
 getSizeFen :: FenMArray array elem -> Int
 getSizeFen (FenMArray n _) = n
 {-# INLINE getSizeFen #-}
 
-addFen :: (MArray array elem f, Commutative elem) => FenMArray array elem -> Int -> elem -> f ()
+addFen :: (MArray array elem m, Commutative elem) => FenMArray array elem -> Int -> elem -> m ()
 addFen (FenMArray n arr) r a = go r where
   -- 1 <= r <= n
   go i = when (i <= n) $ do
@@ -66,7 +67,7 @@ addFen (FenMArray n arr) r a = go r where
     go (i + lsb i)
 {-# INLINABLE addFen #-}
 
-sumPrefixFen :: (MArray array elem f, CommutativeMonoid elem) => FenMArray array elem -> Int -> f elem
+sumPrefixFen :: (MArray array elem m, Monoid elem) => FenMArray array elem -> Int -> m elem
 sumPrefixFen (FenMArray n arr) = go mempty where
   -- prefix (0, r], for 1 <= r <= n
   go !s i
@@ -77,7 +78,7 @@ sumPrefixFen (FenMArray n arr) = go mempty where
 {-# INLINABLE sumPrefixFen #-}
 
 -- only applicable when partial sums are sorted
-lowerBoundFen :: (MArray array elem m, CommutativeMonoid elem, Ord elem) => FenMArray array elem -> elem -> m Int
+lowerBoundFen :: (MArray array elem m, Monoid elem, Ord elem) => FenMArray array elem -> elem -> m Int
 lowerBoundFen (FenMArray n arr) query = go root (n + 1) mempty where
   root = bit (finiteBitSize n - countLeadingZeros n - 1)
   go node
@@ -85,18 +86,18 @@ lowerBoundFen (FenMArray n arr) query = go root (n + 1) mempty where
     | otherwise = nonleaf node
   leaf node fallback prepend 
     | node > n = pure fallback
-    | otherwise =  do
-    nodeval <- readArray arr node
+    | otherwise = do
+    nodeval <- unsafeRead arr node
     pure $ if prepend <> nodeval < query
       then fallback
       else node 
   nonleaf node fallback prepend 
     | node > n = go (leftOf node) fallback prepend
     | otherwise = do
-    nodeval <- readArray arr node
+    nodeval <- unsafeRead arr node
     if prepend <> nodeval < query
       then go (rightOf node) fallback (prepend <> nodeval)
       else go (leftOf node) node prepend
   leftOf node = node - (lsb node `unsafeShiftR` 1)
   rightOf node = node + (lsb node `unsafeShiftR` 1)
--- {-# INLINABLE lowerBoundFen #-}
+{-# INLINABLE lowerBoundFen #-}

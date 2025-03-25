@@ -1,9 +1,9 @@
 from random import *
 
-N = (1 << 19) + (1 << 18)
-M = 3 * N
-C = 1000000
-QWEIGHTS = [2, 2, 2]
+N = (1 << 19)
+M = 6 * N
+C = 1000000000
+QWEIGHTS = [2, 1, 1]
 
 print(N)
 for _ in range(M):

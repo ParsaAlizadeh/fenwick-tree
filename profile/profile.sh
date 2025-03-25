@@ -19,7 +19,8 @@ N="$1"
 
 # List of program names to test.
 # Update these names with the actual executable names.
-programs=("cpp-fen.exe" "hs-standalone.exe" "hs-library-v1.exe" "hs-library-v2.exe" "hs-library.exe" )
+# programs=("cpp-fen.exe" "hs-standalone.exe" "hs-library-v1.exe" "hs-library-v2.exe" "hs-library.exe" )
+programs=("cpp-fen.exe" "hs-standalone.exe" "hs-library.exe" "hs-library-v3.exe")
 
 
 make "${programs[@]}"

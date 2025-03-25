@@ -23,3 +23,8 @@ hs-library-v2.exe: LibraryV2.hs
 	rm -rf /tmp/hs/Main.*
 	ghc -i../src -outputdir/tmp/hs/ -dynamic -O2 -g3 $< -o $@
 .PHONY: hs-library-v2.exe
+
+hs-library-v3.exe: LibraryV3.hs
+	rm -rf /tmp/hs/Main.*
+	ghc -i../src -outputdir/tmp/hs/ -dynamic -O2 -g3 $< -o $@
+.PHONY: hs-library-v3.exe
