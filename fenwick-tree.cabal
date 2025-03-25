@@ -26,8 +26,7 @@ library
         Data.Modulo,
         Data.Array.ArrayC,
         Data.Vector.VectorC,
-        Data.Fenwick.Array,
-        MyLib
+        Data.Fenwick.Array
 
     -- Modules included in this library but not exported.
     -- other-modules:

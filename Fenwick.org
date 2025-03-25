@@ -28,10 +28,10 @@ Function names are not great and need to be changed.
 Semantic of specifying a range is not defined well. We can go with [l, r) or [1, r) in the case of
 prefixes or the full range [l, r] and [1, r].
 
-Haskell indices help for 1-based trees in fenwick implementation. I want to see if they have any
+Haskell indices help for 1-based trees in Fenwick implementation. I want to see if they have any
 runtime overhead.
 
-Monoids in fenwick should be cumtative. This means ~[]~ or ~First~ are not applicable to fenwicks.
+Monoids in Fenwick should be commutative. This means ~[]~ or ~First~ are not applicable to fenwicks.
 
 Need to think about monoids of sum modulo m, or products modulo p. They are mathematically groups,
 but not straightforward monoids and groups in Haskell. I want to make sure when the modulo is
@@ -66,13 +66,13 @@ Why do I like this idea?
 
 Why didn't I see this idea sooner?
 1. One limiting reason of this idea is using tuples. Tuples are necessary for data structures too.
-   Although I haven't seen any Fenwicks with complex data types, it might happend theoritcally, and
+   Although I haven't seen any Fenwicks with complex data types, it might happened theoretically, and
    ~Data.Vector~ somehow supports it while unboxed ~IO~ and ~ST~ have no support for pairs or
    tuples.
 2. Maybe I was ignorant. See [[https://hackage.haskell.org/package/vector-0.13.2.0/docs/Data-Vector-Unboxed.html#t:As][Data.Vector As]] newtype.
 
 I implement instances manually, although I would assume there is an easier way with DerivingVia or
-other similar extenstions. Also I could use coerce, but they need lots of type application.
+other similar extensions. Also I could use coerce, but they need lots of type application.
 
 It is possible to implement arrays for Enums too (for example a sum type in Haskell can be written
 as an unboxed array).
@@ -97,7 +97,7 @@ implementing a dummy instance ~AbelianMonoid~ and implement valid instances.
 
 I tried to compare a C++ implementation with my own. Both of the files are self-contained (in theory
 they can be compiled statically, but currently the only way I can compile Haskell is with
-~-dynamic~). Both of them are compiled with ~-O2~. The core implmentation of Fenwick is completely
+~-dynamic~). Both of them are compiled with ~-O2~. The core implementation of Fenwick is completely
 the same with C++ and Haskell (Haskell allows more abstraction by the way). For a brief moment I
 thought Haskell version is faster, but I was wrong.
 
@@ -107,14 +107,14 @@ more than Haskell version.
 
 This is actually interesting. The only IO optimization in Haskell is with ~readInts~ function. This
 is only parsing number using ~ByteString~ library, and there are no explicit optimization to
-buffering or similer topics.
+buffering or similar topics.
 
 Also, profiling helped me to test the code too. It passes the the testcases and outputs the same as
 the C++ version.
 
 I used ~perf~ to see the bottlenecks. In C++ bottleneck is correctly within the Fenwick code, while
 in Haskell about 15% of runtime is in the base library. This might indicate there are more IO
-optmization in Haskell than I know about.
+optimization in Haskell than I know about.
 
 *** ByteString
 
@@ -140,13 +140,13 @@ They have very minimal effect on the runtime, probably less than 10%.
 
 Update: My experiment was wrong. I didn't check the edge cases, which
 led to believe that the code is correct. I didn't try to profile code
-with correct unsafeRead, but I think the speed improvment won't be
+with correct unsafeRead, but I think the speed improvement won't be
 more than 10%, which is the number I said above.
 
 ** Haskell library
 <2025-03-19 Wed>
 
-I started a haskell library using ~cabal~. The contents of the original files are now seperated in
+I started a haskell library using ~cabal~. The contents of the original files are now separated in
 multiple modules.
 
 + ~Data.Group~
@@ -165,6 +165,34 @@ and search tree is the one that allows ~lowerbound~.
 
 I find out there is no restriction of Group needed (the Wikipedia explanation, which is the Knuth
 explanation, needs extra operations). It is possible to stay within Monoid. I don't think there is
-any performace downside to this change. The only restricition is that partial sums should be
+any performance downside to this change. The only restriction is that partial sums should be
 sorted. I do not know if there is a better law that is equivalent to this. I believe they are all
-more restrictive and disallow some perfect usecases of Fenwick trees.
+more restrictive and disallow some perfect use cases of Fenwick trees.
+
+** Extensive Input Optimization
+<2025-03-25 Tue>
+
+My theory was that a lot of time is wasted for IO in Haskell version. To support this theory, I ran
+~perf~ on both C++ and Haskell, and find the difference between the percentage used by Fenwick tree
+in C++ and in Haskell. Assuming they are implementing the same logic and should run in a similar
+time, That difference means a waste on sections other than Fenwick.
+
+To my surprise, I could not find a lot about IO performance on the Internet. There was an old blog
+that I stole the ~map (fst . fromJust . C.readInt) . C.words <$> C.getLine~. I find [[https://stackoverflow.com/questions/43570129][this
+stackoverflow question]] that experimented with some other methods. There was ~unfoldr go <$>
+C.getLine~ trick (implemented in [[profile/LibraryV1.hs]]) that had some performance gain. The most
+performance gain happened with parsing integers in ~C.getContents~. I implemented two different
+approach to this: one of them is [[profile/LibraryV2.hs]] which uses ~StateT~ to manage the buffer.
+Another one was to use ~IORef~ to store ~ByteString~, and possibly avoid a lot of ~lift~ s in the
+code. Both of these have similar performance, and their runtime is really close to the C++ version.
+I liked the ~IORef~ version more. It is small and self-contained, and can be easily inserted to any
+pre-existing code I had. I tested it for one of my submissions in Codeforces, and the runtime went
+down from 700 ms to 500 ms.
+
+I tried similar tricks with stdout, but could not find any gain with that. I now believe that it is
+much better to output as fast as possible. Keeping builders in memory has no benefit.  It is also
+possible that Haskell might need a fast writer (inverse of parser?) to handle large number of
+integers.
+
+I am happy with the final result. Although the improvements here have no connections with Fenwick
+trees, they allow more informative experiments.

@@ -9,29 +9,30 @@ struct fenwick_tree {
 
   public:
     fenwick_tree() : _n(0) {}
-    fenwick_tree(int n) : _n(n), data(n) {}
+    fenwick_tree(int n) : _n(n), data(n + 1) {}
 
     void add(int p, U x) {
-        // assert(0 <= p && p < _n);
-        p++;
+        assert(1 <= p && p <= _n);
+        // p++;
         while (p <= _n) {
-            data[p - 1] += U(x);
+            data[p] += U(x);
             p += p & -p;
         }
-    }
-
-    U sum(int l, int r) {
-        // assert(0 <= l && l <= r && r <= _n);
-        return sum(r) - sum(l);
     }
 
     U sum(int r) {
         U s = 0;
         while (r > 0) {
-            s += data[r - 1];
+            s += data[r];
             r -= r & -r;
         }
         return s;
+    }
+
+    U sum(int l, int r) {
+        // sum [l, r)
+        assert(1 <= l && l <= r && r <= _n + 1);
+        return sum(r - 1) - sum(l - 1);
     }
 
   private:

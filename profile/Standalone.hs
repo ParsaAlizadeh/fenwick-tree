@@ -1,4 +1,10 @@
-{-# LANGUAGE DataKinds, KindSignatures, ScopedTypeVariables, RoleAnnotations, TypeApplications, BangPatterns #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RoleAnnotations #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
@@ -16,49 +22,14 @@ import GHC.TypeLits
 import Data.Proxy
 import Data.Coerce
 import System.IO
+import Data.IORef
 
 class Monoid a => Group a where
   inverse :: a -> a
 
 instance Num a => Group (Sum a) where
   inverse = negate
-
-type role Modulo nominal nominal
-newtype Modulo a (m :: Nat) = Modulo a
-    deriving (Show, Eq, Ord)
-
-getMod :: (Integral a, KnownNat m) => proxy m -> a
-getMod = fromInteger . natVal
-
-instance (KnownNat m, Integral a) => Num (Modulo a m) where
-    x@(Modulo !a) + (Modulo !b) = Modulo $ 
-        if a + b >= m' then a + b - m' else a + b where
-        m' = getMod x
-    
-    x@(Modulo !a) * (Modulo !b) = Modulo $ (a * b) `mod` m' where
-        m' = getMod x
-    
-    abs = id
-
-    signum = const 1
-
-    fromInteger n = Modulo . fromInteger $ n `mod` m' where
-        m' = getMod (Proxy :: Proxy m)
-    
-    negate x@(Modulo !n) = Modulo $ if n == 0 then 0 else m' - n where
-        m' = getMod x
-
-binPow :: Num a => a -> Int -> a
-binPow _ 0 = 1
-binPow a 1 = a
-binPow !a b
-    | even b = x * x
-    | otherwise = a * x * x where
-        !x = binPow (a * a) (b `div` 2)
-
-instance (Integral a, KnownNat m) => Group (Product (Modulo a m)) where
-    inverse = coerce go where
-        go (a :: Modulo a m) = a `binPow` (getMod a - 2)
+  {-# INLINE inverse #-}
 
 newtype ArrayC array rep ix elem = ArrayC (array ix rep)
 
@@ -115,9 +86,10 @@ sumRangeFen :: (FenwickLike m f a, Group a) => f a -> Int -> Int -> m a
 sumRangeFen _ l r
   | l >= r = pure mempty
 sumRangeFen f l r = do
-  ra <- sumPrefixFen f r
-  la <- sumPrefixFen f l
+  ra <- sumPrefixFen f (r - 1)
+  la <- sumPrefixFen f (l - 1)
   pure (ra <> inverse la)
+{-# INLINABLE sumRangeFen #-}
 
 data FenMArray array elem = FenMArray Int (array Int elem)
 
@@ -126,6 +98,7 @@ modifyArray' arr i f = do
   x <- readArray arr i
   let !x' = f x
   writeArray arr i x'
+{-# INLINE modifyArray' #-}
 
 instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray array) elem where
   newFen n = do
@@ -133,11 +106,11 @@ instance (Monoid elem, Monad m, MArray array elem m) => FenwickLike m (FenMArray
     pure (FenMArray n arr)
 
   addFen (FenMArray n arr) r a = do
-    -- 0 <= r < n - 1
+    -- 1 <= r <= n
     let go i = when (i <= n) $ do
           modifyArray' arr i (a <>)
           go (i + (i .&. (-i)))
-    go (r + 1)
+    go r
 
   sumPrefixFen (FenMArray n arr) r = do
     let go !s i = if i <= 0 then pure s else do
@@ -158,9 +131,10 @@ printInts xs = hPutBuilder stdout (go <> char7 '\n') where
   go = mconcat . intersperse (char7 ' ') . map intDec $ xs
 
 printInt :: Int -> IO ()
-printInt x = hPutBuilder stdout (intDec x <> char7 '\n')
+printInt x = hPutBuilder stdout (intDec x <> charUtf8 '\n')
 
 main = do
+  hSetBuffering stdin (BlockBuffering Nothing)
   hSetBuffering stdout (BlockBuffering Nothing)
   [n] <- readInts
   fen <- newFenSum n
