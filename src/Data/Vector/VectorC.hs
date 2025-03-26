@@ -6,18 +6,27 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | Module       : Data.Array.VectorC
+-- 
+-- This modulo provides 'VectorC' and 'MVectorC', which given a existing vector implementation and a
+-- representation type, it stores elements by coercing the element type into representation type.
+-- Using this, we can have elements with algebraic structures (like 'Data.Monoid.Monoid' used in
+-- this package) but stored in efficient unboxed vectors.
 module Data.Vector.VectorC (
   VectorC, MVectorC
 ) where
 
 import qualified Data.Vector.Generic as VG
 import qualified Data.Vector.Generic.Mutable as VGM
-import qualified Data.Vector.Mutable as VM
-import qualified Data.Vector.Unboxed.Mutable as VUM
-import qualified Data.Vector.Unboxed as VU
 import Data.Coerce
 
+-- | Given a mutable vector type @vector@ and representation type @rep@, the type contructor
+-- @'MVectorC' vector rep@ is a valid vector type that stores elements that are coercible to @rep@.
+-- Use functions in 'Data.Vector.Generic.Mutable.MVector' to create and modify these vectors.
 newtype MVectorC vector rep s elem = MVectorC (vector s rep)
+
+-- | Immutable vectors corresponding to 'MVectorC'. Use functions in 'Data.Vector.Generic.Vector' to create and
+-- modify these vectors.
 newtype VectorC vector rep elem = VectorC (vector rep)
 
 type instance VG.Mutable (VectorC vector rep) = MVectorC (VG.Mutable vector) rep

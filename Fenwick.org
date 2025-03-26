@@ -196,3 +196,9 @@ integers.
 
 I am happy with the final result. Although the improvements here have no connections with Fenwick
 trees, they allow more informative experiments.
+
+** Documentation
+<2025-03-26 Wed>
+
+I have written the [[https://cabal.readthedocs.io/en/stable/][cabal]] files and [[https://haskell-haddock.readthedocs.io/latest/markup.html][haddock]] documentation. The package
+is technically ready to be uploaded to github and/or hackage.

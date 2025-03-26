@@ -1,12 +1,23 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module Data.Array.ArrayC where
+-- | Module       : Data.Array.ArrayC
+-- 
+-- This modulo provides 'ArrayC', which given a existing 'MArray' implementation and a
+-- representation type, it stores elements by coercing the element type into representation type.
+-- Using this, we can have elements with algebraic structures (like 'Data.Monoid.Monoid' used in
+-- this package) but stored in efficient unboxed arrays.
+module Data.Array.ArrayC ( ArrayC ) where
 
 import Data.Array.MArray
-import Data.Array.Base
+import Data.Array.Base hiding (array, elems)
 import Data.Coerce
 
+-- | Given an array type (e.g. 'Data.Array.IO.IOUArray') and a representation type (e.g. 'Int'), the
+-- type constructor @'ArrayC' 'Data.Array.IO.IOUArray' 'Int'@ is a valid array type, that can store
+-- elements that are coercible to 'Int' (the representation type). The same type can be used for
+-- immutable and mutable arrays. Use functions from 'Data.Array.IArray' and 'Data.Array.MArray' to
+-- create and modify the array.
 newtype ArrayC array rep ix elem = ArrayC (array ix rep)
 
 instance (IArray array rep, Coercible rep elem) => IArray (ArrayC array rep) elem where
