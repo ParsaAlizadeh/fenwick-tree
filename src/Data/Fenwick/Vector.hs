@@ -8,7 +8,7 @@
 -- @monoid-subclasses@ and @commutative-semigroups@. If you want mark @Sum@ or @Product@ as
 -- @Commutative@, see @SumCommutative@ and @ProductCommutative@ in the mentioned packages.
 --
--- I was hoping the merge this module with 'Data.Fenwick.Array' under a common typeclass, although I
+-- I was hoping to merge this module with 'Data.Fenwick.Array' under a common typeclass, although I
 -- couldn't find any way through this. I may change this later, if I find the right abstractions. 
 
 module Data.Fenwick.Vector 
