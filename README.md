@@ -1,4 +1,4 @@
-# fenwick-tree
+# mutable-fenwick
 
 This package provides an implementation of mutable
 [Fenwick trees](https://en.wikipedia.org/wiki/Fenwick_tree) in Haskell.
@@ -15,6 +15,8 @@ for the given element type. With `ArrayC` and `VectorC` from this package, it is
 unboxed arrays and vectors for newtypes that implement a custom algebra (e.g. `Sum`, `Product` or
 `Xor`). An implementation using this library can be as fast as a C/C++ implementation.
 
-It is the only Haskell library (I believe, as of this date) that provides Fenwick trees. The
-[FenwickTree](https://hackage.haskell.org/package/FenwickTree) on Hackage is more similar to a
-Segment tree, and it does not have a generic interface for the data structure.
+It is the only Haskell library (I believe, as of this date) that provides Fenwick trees. 
+- The [FenwickTree](https://hackage.haskell.org/package/FenwickTree) package is more similar to a
+  Segment tree, and it does not have a generic interface for the data structure.
+- The [binary-indexed-tree](https://hackage.haskell.org/package/binary-indexed-tree) package
+  has an interface for ST monad, but the implementation is only limited to `Sum` monoid.

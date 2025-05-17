@@ -1,3 +1,1 @@
-packages: ./fenwick-tree.cabal
-package fenwick-tree
-  optimization: 2
+packages: ./mutable-fenwick.cabal
