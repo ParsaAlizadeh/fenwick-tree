@@ -24,7 +24,9 @@ author:             Parsa Alizadeh
 maintainer:         parsa.alizadeh1@gmail.com
 copyright:          (c) Parsa Alizade, 2025
 category:           Data
-extra-source-files: CHANGELOG.md
+extra-source-files:
+    README.md
+    CHANGELOG.md
 
 tested-with: GHC == 9.2.8 || == 9.4.8
 
@@ -61,6 +63,6 @@ test-suite test-fenwick
         hspec,
         mutable-fenwick,
         array,
-        vector
+        vector,
     main-is: FenwickTest.hs
 
