@@ -2,13 +2,13 @@
 
 -- | Module       : Data.Fenwick.Vector
 -- 
--- This modulo provides mutable [https://en.wikipedia.org/wiki/Fenwick_tree](Fenwick Trees), using
+-- This modulo provides mutable [Fenwick Trees](https://en.wikipedia.org/wiki/Fenwick_tree), using
 -- vectors as the underlying data structure. The algebraic structure is given by 'Semigroup' and
 -- 'Monoid' instances. Some of the functions require the structure to be 'Commutative'. See
 -- @monoid-subclasses@ and @commutative-semigroups@. If you want mark @Sum@ or @Product@ as
 -- @Commutative@, see @SumCommutative@ and @ProductCommutative@ in the mentioned packages.
 --
--- I was hoping to merge this module with 'Data.Fenwick.Array' under a common typeclass, although I
+-- I was hoping to merge this module with "Data.Fenwick.Array" under a common typeclass, although I
 -- couldn't find any way through this. I may change this later, if I find the right abstractions. 
 
 module Data.Fenwick.Vector 

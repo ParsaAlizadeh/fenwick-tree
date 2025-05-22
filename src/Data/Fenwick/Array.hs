@@ -2,11 +2,12 @@
 
 -- | Module       : Data.Fenwick.Array
 -- 
--- This modulo provides mutable [https://en.wikipedia.org/wiki/Fenwick_tree](Fenwick Trees), using
+-- This modulo provides mutable [Fenwick Trees](https://en.wikipedia.org/wiki/Fenwick_tree), using
 -- arrays as the underlying data structure. The algebraic structure is given by 'Semigroup' and
--- 'Monoid' instances. Some of the functions require the structure to be 'Commutative'. See
--- @monoid-subclasses@ and @commutative-semigroups@. If you want mark @Sum@ or @Product@ as
--- @Commutative@, see @SumCommutative@ and @ProductCommutative@ in the mentioned packages.
+-- 'Monoid' instances. Some of the functions require the structure to be
+-- 'Data.Semigroup.Commutative.Commutative'. See @monoid-subclasses@ and @commutative-semigroups@.
+-- If you want mark @Sum@ or @Product@ as @Commutative@, see @SumCommutative@ and
+-- @ProductCommutative@ in the mentioned packages.
 
 module Data.Fenwick.Array 
   ( FenMArray
