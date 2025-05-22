@@ -1,5 +1,7 @@
 # mutable-fenwick
 
+![Hackage Version](https://img.shields.io/hackage/v/mutable-fenwick?color=blue)
+
 This package provides an implementation of mutable
 [Fenwick trees](https://en.wikipedia.org/wiki/Fenwick_tree) in Haskell.
 
