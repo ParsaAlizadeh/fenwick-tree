@@ -202,3 +202,27 @@ trees, they allow more informative experiments.
 
 I have written the [[https://cabal.readthedocs.io/en/stable/][cabal]] files and [[https://haskell-haddock.readthedocs.io/latest/markup.html][haddock]] documentation. The package
 is technically ready to be uploaded to github and/or hackage.
+
+** Backward-compatibility of ~array~
+<2025-05-28 Wed>
+
+I uploaded the package a week ago. It was successful and I was able to install my own
+package from another device. See on [[https://hackage.haskell.org/package/mutable-fenwick][hackage]].
+
+There was an issue of compiling and building the documentation on hackage. Although I can build and
+upload from my local installation, I thought about using another development environment too.  I am
+using ~ghcup~ now. It is fairly easy to set up, and I can test my package in various GHC
+versions. GHC on Archlinux turns out to be quite obsolete and all the packages are from ages ago. So
+using ~ghcup~ is actually making sense even when I am not working on this project.
+
+After updating to the latest version of GHC (9.12.2), there was an issue with ~array~ package.  I
+defined ~modifyArray'~ which was also defined in the later versions of ~array~. I did limit the
+imports from ~array~ package to fix this temporarily.
+
+I can use ~CPP~ extensions to build the ~modifyArray'~ function if the ~array~ was old.  But that
+seems to be rabbit hole that I don't want to pursue.
+
+I could also bump the ~array~ dependency to 0.5.8.0, but unfortunately the ~array~ package in
+ArchLinux is 0.5.4.0, which is an indication that my package will not work on those environments.  I
+might decide to this, but for now I want to hold this decision until I have more experience with
+this situations of backward-compatibility.

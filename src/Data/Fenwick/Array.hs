@@ -21,11 +21,13 @@ module Data.Fenwick.Array
   ) where
 
 import Data.Array.MArray
+  ( Ix, MArray(newArray), readArray, writeArray )
+import Data.Array.Base
+  ( MArray(unsafeRead, unsafeWrite) )
 import Control.Monad
 import Data.Bits
 import Data.Semigroup.Cancellative
 import Data.Monoid.Cancellative
-import Data.Array.Base
 
 -- | Fenwick tree datatype. @array@ must be a type such that @array 'Int' elem@ refers to a valid
 -- mutable array. Fenwick tree is assumed to be data structure over a 1-based array of size @n@.
